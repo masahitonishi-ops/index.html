@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FollowAI — 保険営業アシスタント</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #151820;
+    --surface2: #1c2030;
+    --border: #252a38;
+    --accent: #4f8ef7;
+    --accent2: #7c6af7;
+    --gold: #e8c97a;
+    --green: #3dd68c;
+    --red: #f76f6f;
+    --text: #e8eaf0;
+    --text2: #8892aa;
+    --text3: #4a5168;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Layout */
+  .app { display: flex; height: 100vh; overflow: hidden; }
+
+  /* Sidebar */
+  .sidebar {
+    width: 240px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    flex-shrink: 0;
+  }
+
+  .logo {
+    padding: 24px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 22px;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 3px;
+  }
+
+  .nav {
+    padding: 16px 12px;
+    flex: 1;
+  }
+
+  .nav-label {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 0 8px;
+    margin-bottom: 6px;
+    margin-top: 16px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text2);
+    font-size: 13px;
+    transition: all 0.15s;
+    margin-bottom: 2px;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+  .nav-item.active { background: rgba(79, 142, 247, 0.12); color: var(--accent); }
+
+  .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+
+  .badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: white;
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-weight: 700;
+  }
+
+  .badge.gold { background: var(--gold); color: #0d0f14; }
+
+  .sidebar-footer {
+    padding: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .user-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { font-size: 12px; font-weight: 500; }
+  .user-role { font-size: 10px; color: var(--text3); }
+
+  /* Main Content */
+  .main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+
+  .page-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 20px;
+    color: var(--text);
+  }
+
+  .page-subtitle { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+  .btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    border: none;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
+
+  .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+
+  .btn-primary:hover { background: #3d7ae0; }
+
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 28px;
+    display: flex;
+    gap: 20px;
+  }
+
+  /* Stat Cards */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .stat-card.blue::before { background: var(--accent); }
+  .stat-card.purple::before { background: var(--accent2); }
+  .stat-card.gold::before { background: var(--gold); }
+  .stat-card.green::before { background: var(--green); }
+
+  .stat-label { font-size: 10px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; }
+  .stat-value { font-size: 28px; font-weight: 700; margin-top: 6px; line-height: 1; }
+  .stat-value.blue { color: var(--accent); }
+  .stat-value.purple { color: var(--accent2); }
+  .stat-value.gold { color: var(--gold); }
+  .stat-value.green { color: var(--green); }
+  .stat-sub { font-size: 10px; color: var(--text3); margin-top: 4px; }
+
+  /* Left panel */
+  .left-panel { flex: 1; min-width: 0; }
+  .right-panel { width: 380px; flex-shrink: 0; }
+
+  /* Section header */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+  }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  /* Customer List */
+  .customer-list {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .customer-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+  }
+
+  .customer-item:last-child { border-bottom: none; }
+  .customer-item:hover { background: var(--surface2); }
+  .customer-item.selected { background: rgba(79, 142, 247, 0.08); }
+
+  .customer-item.selected::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--accent);
+    border-radius: 0 2px 2px 0;
+  }
+
+  .customer-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .avatar-blue { background: rgba(79, 142, 247, 0.15); color: var(--accent); }
+  .avatar-purple { background: rgba(124, 106, 247, 0.15); color: var(--accent2); }
+  .avatar-gold { background: rgba(232, 201, 122, 0.15); color: var(--gold); }
+  .avatar-green { background: rgba(61, 214, 140, 0.15); color: var(--green); }
+
+  .customer-info { flex: 1; min-width: 0; }
+  .customer-name { font-size: 13px; font-weight: 500; }
+  .customer-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  .trigger-badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .trigger-urgent { background: rgba(247, 111, 111, 0.15); color: var(--red); }
+  .trigger-normal { background: rgba(79, 142, 247, 0.15); color: var(--accent); }
+  .trigger-event { background: rgba(232, 201, 122, 0.15); color: var(--gold); }
+
+  .priority-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* AI Message Panel */
+  .message-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-title {
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .ai-badge {
+    font-size: 9px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+
+  .panel-body { padding: 16px; }
+
+  .customer-detail {
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 14px;
+  }
+
+  .detail-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+    font-size: 11px;
+  }
+
+  .detail-row:last-child { margin-bottom: 0; }
+  .detail-key { color: var(--text3); width: 80px; flex-shrink: 0; }
+  .detail-val { color: var(--text); }
+
+  .trigger-info {
+    background: rgba(232, 201, 122, 0.08);
+    border: 1px solid rgba(232, 201, 122, 0.2);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    font-size: 11px;
+    color: var(--gold);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .message-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    font-size: 13px;
+    line-height: 1.8;
+    color: var(--text);
+    min-height: 120px;
+    margin-bottom: 14px;
+    position: relative;
+  }
+
+  .message-generating {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text2);
+    font-size: 12px;
+  }
+
+  .dots {
+    display: flex;
+    gap: 4px;
+  }
+
+  .dot-anim {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: bounce 1.2s infinite;
+  }
+
+  .dot-anim:nth-child(2) { animation-delay: 0.2s; }
+  .dot-anim:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  .message-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .btn-copy {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text2);
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+
+  .btn-copy:hover { background: var(--surface2); color: var(--text); }
+
+  .btn-regen {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    border: none;
+    background: rgba(79, 142, 247, 0.15);
+    color: var(--accent);
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+
+  .btn-regen:hover { background: rgba(79, 142, 247, 0.25); }
+
+  .btn-send {
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-family: 'Noto Sans JP', sans-serif;
+    cursor: pointer;
+    border: none;
+    background: var(--green);
+    color: #0d0f14;
+    transition: all 0.15s;
+    font-weight: 700;
+  }
+
+  .btn-send:hover { background: #2fc07e; }
+
+  /* Tone selector */
+  .tone-selector {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+  }
+
+  .tone-btn {
+    flex: 1;
+    padding: 6px;
+    border-radius: 6px;
+    font-size: 10px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text3);
+    font-family: 'Noto Sans JP', sans-serif;
+    transition: all 0.15s;
+    text-align: center;
+  }
+
+  .tone-btn.active {
+    border-color: var(--accent);
+    background: rgba(79, 142, 247, 0.1);
+    color: var(--accent);
+  }
+
+  /* Right panel sections */
+  .mini-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+
+  .timeline-item {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 11px;
+  }
+
+  .timeline-item:last-child { margin-bottom: 0; }
+
+  .timeline-line {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  .timeline-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+
+  .timeline-dot.done { background: var(--green); }
+  .timeline-dot.soon { background: var(--gold); }
+  .timeline-dot.pending { background: var(--text3); }
+
+  .tl-content { flex: 1; }
+  .tl-title { font-size: 11px; color: var(--text); }
+  .tl-date { font-size: 10px; color: var(--text3); margin-top: 1px; }
+
+  /* Header tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface2);
+    padding: 4px;
+    border-radius: 8px;
+  }
+
+  .tab {
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    color: var(--text3);
+    transition: all 0.15s;
+    font-weight: 500;
+  }
+
+  .tab.active { background: var(--surface); color: var(--text); }
+
+  /* Main layout fix */
+  .content-inner {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .content-wrap {
+    display: flex;
+    gap: 20px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* Animations */
+  .fade-in {
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .pulse {
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .char-count {
+    font-size: 10px;
+    color: var(--text3);
+    text-align: right;
+    margin-top: 6px;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .copy-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--green);
+    color: #0d0f14;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    display: none;
+    z-index: 9999;
+  }
+
+  .copy-toast.show {
+    display: block;
+    animation: toastIn 0.3s ease, toastOut 0.3s ease 1.5s forwards;
+  }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+    to { opacity: 1; transform: translateX(-50%) translateY(0); }
+  }
+
+  @keyframes toastOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">
+      <div class="logo-title">FollowAI</div>
+      <div class="logo-sub">Insurance Assistant</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-label">メイン</div>
+      <div class="nav-item active">
+        <span class="nav-icon">📋</span>
+        今日のフォロー
+        <span class="badge">7</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">👥</span>
+        顧客管理
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">📨</span>
+        送信履歴
+      </div>
+
+      <div class="nav-label">分析</div>
+      <div class="nav-item">
+        <span class="nav-icon">📈</span>
+        アクティビティ
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">🎯</span>
+        成約管理
+        <span class="badge gold">2</span>
+      </div>
+
+      <div class="nav-label">設定</div>
+      <div class="nav-item">
+        <span class="nav-icon">⚙️</span>
+        プロフィール設定
+      </div>
+      <div class="nav-item">
+        <span class="nav-icon">🤖</span>
+        AI設定
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-card">
+        <div class="avatar">鈴</div>
+        <div class="user-info">
+          <div class="user-name">鈴木 健太</div>
+          <div class="user-role">ソニー生命 / エグゼクティブ</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="page-title">今日のフォローリスト</div>
+        <div class="page-subtitle">2024年3月23日（土）— 7件のアクションが必要です</div>
+      </div>
+      <div class="topbar-actions">
+        <div class="tabs">
+          <div class="tab active">全て</div>
+          <div class="tab">緊急</div>
+          <div class="tab">イベント</div>
+          <div class="tab">定期</div>
+        </div>
+        <button class="btn btn-ghost">CSV取込</button>
+        <button class="btn btn-primary">+ 顧客追加</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Stats + List -->
+      <div class="left-panel">
+        <div class="stats-row">
+          <div class="stat-card blue">
+            <div class="stat-label">今日の対象</div>
+            <div class="stat-value blue">7</div>
+            <div class="stat-sub">うち緊急 2件</div>
+          </div>
+          <div class="stat-card gold">
+            <div class="stat-label">今月の送信数</div>
+            <div class="stat-value gold">43</div>
+            <div class="stat-sub">先月比 +18%</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-label">返信率</div>
+            <div class="stat-value green">68%</div>
+            <div class="stat-sub">業界平均 31%</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-label">管理顧客数</div>
+            <div class="stat-value purple">284</div>
+            <div class="stat-sub">アクティブ 211</div>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <div class="section-title">
+            <div class="dot"></div>
+            アクション待ち顧客
+          </div>
+          <button class="btn btn-ghost" style="font-size:11px; padding: 5px 10px;">並び替え</button>
+        </div>
+
+        <div class="customer-list">
+          <div class="customer-item selected" onclick="selectCustomer(this, 0)">
+            <div class="priority-dot" style="background: var(--red)"></div>
+            <div class="customer-avatar avatar-gold">田</div>
+            <div class="customer-info">
+              <div class="customer-name">田中 誠一郎 様</div>
+              <div class="customer-meta">35歳・会社員・妻・子2人 — 未接触 8ヶ月</div>
+            </div>
+            <div class="trigger-badge trigger-urgent">🎒 入学</div>
+          </div>
+          <div class="customer-item" onclick="selectCustomer(this, 1)">
+            <div class="priority-dot" style="background: var(--red)"></div>
+            <div class="customer-avatar avatar-purple">山</div>
+            <div class="customer-info">
+              <div class="customer-name">山本 美咲 様</div>
+              <div class="customer-meta">42歳・自営業・独身 — 契約更新 30日前</div>
+            </div>
+            <div class="trigger-badge trigger-urgent">⚡ 更新</div>
+          </div>
+          <div class="customer-item" onclick="selectCustomer(this, 2)">
+            <div class="priority-dot" style="background: var(--gold)"></div>
+            <div class="customer-avatar avatar-blue">佐</div>
+            <div class="customer-info">
+              <div class="customer-name">佐藤 雅之 様</div>
+              <div class="customer-meta">58歳・管理職・妻 — 来月 定年予定</div>
+            </div>
+            <div class="trigger-badge trigger-event">🎌 定年</div>
+          </div>
+          <div class="customer-item" onclick="selectCustomer(this, 3)">
+            <div class="priority-dot" style="background: var(--accent)"></div>
+            <div class="customer-avatar avatar-green">中</div>
+            <div class="customer-info">
+              <div class="customer-name">中村 由美子 様</div>
+              <div class="customer-meta">31歳・看護師・第一子出産予定</div>
+            </div>
+            <div class="trigger-badge trigger-event">👶 出産</div>
+          </div>
+          <div class="customer-item" onclick="selectCustomer(this, 4)">
+            <div class="priority-dot" style="background: var(--accent)"></div>
+            <div class="customer-avatar avatar-blue">伊</div>
+            <div class="customer-info">
+              <div class="customer-name">伊藤 健二 様</div>
+              <div class="customer-meta">47歳・経営者 — 未接触 12ヶ月</div>
+            </div>
+            <div class="trigger-badge trigger-normal">📅 定期</div>
+          </div>
+          <div class="customer-item" onclick="selectCustomer(this, 5)">
+            <div class="priority-dot" style="background: var(--text3)"></div>
+            <div class="customer-avatar avatar-purple">木</div>
+            <div class="customer-info">
+              <div class="customer-name">木村 拓也 様</div>
+              <div class="customer-meta">29歳・会社員 — 契約記念日 今週</div>
+            </div>
+            <div class="trigger-badge trigger-normal">🎂 記念日</div>
+          </div>
+          <div class="customer-item" onclick="selectCustomer(this, 6)">
+            <div class="priority-dot" style="background: var(--text3)"></div>
+            <div class="customer-avatar avatar-gold">小</div>
+            <div class="customer-info">
+              <div class="customer-name">小林 幸子 様</div>
+              <div class="customer-meta">65歳・無職・夫 — 払込満了 6ヶ月前</div>
+            </div>
+            <div class="trigger-badge trigger-normal">💰 払込</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: AI Message -->
+      <div class="right-panel">
+        <div class="message-panel fade-in">
+          <div class="panel-header">
+            <div class="panel-title">
+              <span>AIメッセージ生成</span>
+              <span class="ai-badge">Claude AI</span>
+            </div>
+            <span style="font-size:10px; color: var(--text3);" id="customer-label">田中 誠一郎 様</span>
+          </div>
+          <div class="panel-body">
+            <!-- Customer detail -->
+            <div class="customer-detail">
+              <div class="detail-row">
+                <span class="detail-key">お名前</span>
+                <span class="detail-val" id="d-name">田中 誠一郎 様（35歳）</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-key">ご家族</span>
+                <span class="detail-val" id="d-family">奥様・お子様2人（7歳・4歳）</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-key">ご契約</span>
+                <span class="detail-val" id="d-contract">定期死亡保険・月¥15,000</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-key">最終接触</span>
+                <span class="detail-val" id="d-last" style="color: var(--red)">8ヶ月前</span>
+              </div>
+            </div>
+
+            <!-- Trigger -->
+            <div class="trigger-info" id="trigger-info">
+              <span>🎒</span>
+              <span id="trigger-text">長男が来春 小学校入学予定。節目のタイミングでの見直し機会。</span>
+            </div>
+
+            <!-- Tone -->
+            <div style="margin-bottom: 8px; font-size: 10px; color: var(--text3);">トーン選択</div>
+            <div class="tone-selector">
+              <div class="tone-btn active" onclick="selectTone(this)">丁寧</div>
+              <div class="tone-btn" onclick="selectTone(this)">親しみ</div>
+              <div class="tone-btn" onclick="selectTone(this)">簡潔</div>
+              <div class="tone-btn" onclick="selectTone(this)">フォーマル</div>
+            </div>
+
+            <!-- Generated message -->
+            <div style="margin-bottom: 8px; font-size: 10px; color: var(--text3);">生成メッセージ</div>
+            <div class="message-box" id="message-box">
+              田中様、ご無沙汰しております。担当の鈴木です。来春、長男様が小学校ご入学とのこと、誠におめでとうございます🎒お子様の成長は本当に嬉しいですね。節目のタイミングでもありますので、もしご不明な点やご相談などがございましたら、いつでもお気軽にご連絡ください。
+            </div>
+            <div class="char-count" id="char-count">現在 85文字</div>
+
+            <!-- Actions -->
+            <div class="message-actions">
+              <button class="btn-copy" onclick="copyMessage()">📋 コピー</button>
+              <button class="btn-regen" onclick="regenerate()">🔄 再生成</button>
+              <button class="btn-send" onclick="markSent()">✓ 送信済み</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- History mini -->
+        <div class="mini-card">
+          <div class="section-header" style="margin-bottom: 10px;">
+            <div class="section-title" style="font-size:11px;">
+              <div class="dot" style="background: var(--gold)"></div>
+              接触履歴
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-line">
+              <div class="timeline-dot done"></div>
+            </div>
+            <div class="tl-content">
+              <div class="tl-title">契約締結（定期死亡保険）</div>
+              <div class="tl-date">2022年7月</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-line">
+              <div class="timeline-dot done"></div>
+            </div>
+            <div class="tl-content">
+              <div class="tl-title">次男誕生 — 特約追加提案</div>
+              <div class="tl-date">2023年5月</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-line">
+              <div class="timeline-dot done"></div>
+            </div>
+            <div class="tl-content">
+              <div class="tl-title">年次フォロー（メール）</div>
+              <div class="tl-date">2023年8月</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-line">
+              <div class="timeline-dot soon"></div>
+            </div>
+            <div class="tl-content" style="color: var(--gold);">
+              <div class="tl-title">今日 — AIフォローメッセージ</div>
+              <div class="tl-date">2024年3月23日</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="copy-toast" id="copy-toast">✓ クリップボードにコピーしました</div>
+
+<script>
+const customers = [
+  {
+    name: "田中 誠一郎 様",
+    detail: "田中 誠一郎 様（35歳）",
+    family: "奥様・お子様2人（7歳・4歳）",
+    contract: "定期死亡保険・月¥15,000",
+    last: "8ヶ月前",
+    lastColor: "var(--red)",
+    triggerIcon: "🎒",
+    trigger: "長男が来春 小学校入学予定。節目のタイミングでの見直し機会。",
+    message: "田中様、ご無沙汰しております。担当の鈴木です。来春、長男様が小学校ご入学とのこと、誠におめでとうございます🎒お子様の成長は本当に嬉しいですね。節目のタイミングでもありますので、もしご不明な点やご相談などがございましたら、いつでもお気軽にご連絡ください。"
+  },
+  {
+    name: "山本 美咲 様",
+    detail: "山本 美咲 様（42歳）",
+    family: "独身・一人暮らし",
+    contract: "医療保険・月¥22,000",
+    last: "3ヶ月前",
+    lastColor: "var(--gold)",
+    triggerIcon: "⚡",
+    trigger: "契約更新まで残30日。更新確認と見直し提案の絶好の機会。",
+    message: "山本様、いつもお世話になっております。鈴木でございます。ご契約の医療保険の更新時期が近づいてまいりましたので、ご確認のご連絡をさせていただきました。ご不明な点がございましたら、お気軽にお申し付けください。"
+  },
+  {
+    name: "佐藤 雅之 様",
+    detail: "佐藤 雅之 様（58歳）",
+    family: "奥様・お子様独立済み",
+    contract: "終身保険・月¥38,000",
+    last: "5ヶ月前",
+    lastColor: "var(--text2)",
+    triggerIcon: "🎌",
+    trigger: "来月に定年退職予定。老後の保障・年金プランの見直し提案機会。",
+    message: "佐藤様、お世話になっております。担当の鈴木です。来月ご退職とのこと、長年のご勤務本当にお疲れ様でございました。新しいステージに向けて、保障内容の見直しをご一緒に検討できればと思いご連絡しました。ご都合のよい時にお時間をいただけますか？"
+  },
+  {
+    name: "中村 由美子 様",
+    detail: "中村 由美子 様（31歳）",
+    family: "ご主人・第一子出産予定",
+    contract: "定期死亡保険・月¥9,800",
+    last: "2ヶ月前",
+    lastColor: "var(--text2)",
+    triggerIcon: "👶",
+    trigger: "第一子ご出産予定。新生児向け保障・学資保険の提案タイミング。",
+    message: "中村様、ご出産まであと少しですね🍀心よりお祝い申し上げます。担当の鈴木です。お子様のご誕生に合わせて、将来の教育費や保障について一度ご相談できればと思っております。落ち着かれましたらお声がけください。"
+  },
+  {
+    name: "伊藤 健二 様",
+    detail: "伊藤 健二 様（47歳）",
+    family: "奥様・お子様1人（15歳）",
+    contract: "法人契約・役員保険",
+    last: "12ヶ月前",
+    lastColor: "var(--red)",
+    triggerIcon: "📅",
+    trigger: "未接触12ヶ月経過。経営者向け税制優遇の最新情報を活用したアプローチ。",
+    message: "伊藤様、ご無沙汰しております。担当の鈴木です。最近、経営者の方にとって有利な保険の税制見直しがございまして、ぜひご共有させていただきたいと思いご連絡しました。15分程度でご説明できますので、お時間をいただけますでしょうか。"
+  },
+  {
+    name: "木村 拓也 様",
+    detail: "木村 拓也 様（29歳）",
+    family: "独身・彼女あり",
+    contract: "定期死亡保険・月¥5,200",
+    last: "1年前",
+    lastColor: "var(--red)",
+    triggerIcon: "🎂",
+    trigger: "ご契約から1周年。お礼と近況確認のタイミング。",
+    message: "木村様、いつもお世話になっております。担当の鈴木です。ご契約からちょうど1年が経ちました。改めまして、ご契約いただきありがとうございます。その後お変わりはございませんか？何かございましたらお気軽にご連絡ください😊"
+  },
+  {
+    name: "小林 幸子 様",
+    detail: "小林 幸子 様（65歳）",
+    family: "ご主人（68歳）",
+    contract: "終身保険・月¥41,000",
+    last: "4ヶ月前",
+    lastColor: "var(--text2)",
+    triggerIcon: "💰",
+    trigger: "払込満了まで6ヶ月。満了後の活用方法・追加提案の準備タイミング。",
+    message: "小林様、いつもお世話になっております。鈴木でございます。ご契約の終身保険の払込満了まで、あと半年となりました。満了後の保険の活用方法についても、ぜひご説明させていただければと思います。お近くにお伺いすることも可能ですので、ご都合をお知らせいただけますか。"
+  }
+];
+
+let currentIdx = 0;
+
+function selectCustomer(el, idx) {
+  document.querySelectorAll('.customer-item').forEach(i => i.classList.remove('selected'));
+  el.classList.add('selected');
+  currentIdx = idx;
+  const c = customers[idx];
+
+  document.getElementById('customer-label').textContent = c.name;
+  document.getElementById('d-name').textContent = c.detail;
+  document.getElementById('d-family').textContent = c.family;
+  document.getElementById('d-contract').textContent = c.contract;
+  document.getElementById('d-last').textContent = c.last;
+  document.getElementById('d-last').style.color = c.lastColor;
+  document.getElementById('trigger-info').querySelector('span:first-child').textContent = c.triggerIcon;
+  document.getElementById('trigger-text').textContent = c.trigger;
+
+  const box = document.getElementById('message-box');
+  box.innerHTML = '<div class="message-generating"><div class="dots"><div class="dot-anim"></div><div class="dot-anim"></div><div class="dot-anim"></div></div><span>AIが生成中...</span></div>';
+  document.getElementById('char-count').textContent = '生成中...';
+
+  setTimeout(() => {
+    box.textContent = c.message;
+    box.classList.add('fade-in');
+    document.getElementById('char-count').textContent = `現在 ${c.message.length}文字`;
+  }, 800);
+}
+
+function selectTone(el) {
+  document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  regenerate();
+}
+
+function regenerate() {
+  const c = customers[currentIdx];
+  const box = document.getElementById('message-box');
+  box.innerHTML = '<div class="message-generating"><div class="dots"><div class="dot-anim"></div><div class="dot-anim"></div><div class="dot-anim"></div></div><span>AIが再生成中...</span></div>';
+  document.getElementById('char-count').textContent = '生成中...';
+  setTimeout(() => {
+    box.textContent = c.message;
+    document.getElementById('char-count').textContent = `現在 ${c.message.length}文字`;
+  }, 1000);
+}
+
+function copyMessage() {
+  const msg = document.getElementById('message-box').textContent;
+  if (msg.includes('生成中')) return;
+  navigator.clipboard.writeText(msg).catch(() => {});
+  const toast = document.getElementById('copy-toast');
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2000);
+}
+
+function markSent() {
+  const items = document.querySelectorAll('.customer-item');
+  const current = items[currentIdx];
+  current.style.opacity = '0.4';
+  current.style.pointerEvents = 'none';
+
+  const badge = current.querySelector('.trigger-badge');
+  if (badge) {
+    badge.textContent = '✓ 送信済';
+    badge.className = 'trigger-badge';
+    badge.style.background = 'rgba(61,214,140,0.15)';
+    badge.style.color = 'var(--green)';
+  }
+
+  const dot = current.querySelector('.priority-dot');
+  if (dot) dot.style.background = 'var(--green)';
+
+  // Move to next
+  for (let i = currentIdx + 1; i < customers.length; i++) {
+    if (items[i].style.opacity !== '0.4') {
+      selectCustomer(items[i], i);
+      break;
+    }
+  }
+}
+</script>
+</body>
+</html>
